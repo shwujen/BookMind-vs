@@ -10,7 +10,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const GAS_URL = process.env.GOOGLE_APP_SCRIPT_URL;
 
-app.use(cors());
+// 🛠️ 修正後的 CORS 精確設定
+const corsOptions = {
+  origin: 'https://shwujen.github.io', // 👈 允許你的 GitHub Pages 前端網站存取
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200 // 確保舊版瀏覽器（如 IE）對 OPTIONS 請求回傳 200
+};
+
+app.use(cors(corsOptions)); // 👈 套用精確設定
 app.use(bodyParser.json());
 
 // 測試 API 連接
@@ -58,5 +67,5 @@ app.post('/api/books/action', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
