@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const GAS_URL = process.env.GOOGLE_APP_SCRIPT_URL;
+const GAS_URL = process.env.VITE_GAS_URL;
 
 // 🛠️ 修正後的 CORS 精確設定
 const corsOptions = {
