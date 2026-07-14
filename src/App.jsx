@@ -156,7 +156,7 @@ function App() {
     notes: ''
   });
 
-  const GAS_URL = '/gas';
+  const GAS_URL = import.meta.env.VITE_GAS_URL || '/gas';
 
   useEffect(() => {
     fetchBooks();
