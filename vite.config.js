@@ -1,24 +1,40 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+name: Deploy static content to Pages
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyVA2cEhKV7MuaepzA5oMWiSpNlW5juIbfU-hR11HWt5rJQTk1tVhfJR9geKBfLGZNn/exec';
+on:
+  push:
+    branches: ["main"]
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-  base: '/BookMind-vs/',
-  server: {
-    port: 3000,
-    proxy: {
-      '/gas': {
-        target: GAS_URL,
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/gas/, ''),
-      }
-    }
-  }
-})
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # 👈 這裡已修正為 .deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
