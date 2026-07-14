@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&display=swap');
+
+body {
+  font-family: 'Noto Serif TC', Georgia, serif;
+  background-color: #f7f5f0; /* 文青暖色調背景 */
+}
