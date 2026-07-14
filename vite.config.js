@@ -10,6 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: '/BookMind-vs/',
   server: {
     port: 3000,
     proxy: {
