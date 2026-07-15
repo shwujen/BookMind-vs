@@ -141,6 +141,7 @@ function App() {
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedBook, setSelectedBook] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: string }
 
   // 表單資料
   const [formData, setFormData] = useState({
@@ -271,22 +272,26 @@ function App() {
     const today = new Date().toISOString().split('T')[0];
     const payload = buildBookPayload(selectedBook ? 'update' : 'add', formData, selectedBook, bookId, today);
 
+    setSubmitStatus(null);
     try {
       const res = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' }, // text/plain avoids CORS preflight (OPTIONS) which GAS doesn't handle
         body: JSON.stringify(payload)
       });
       const text = await res.text();
       const result = JSON.parse(text);
       if (result.status === 'success') {
+        setSubmitStatus({ type: 'success', message: selectedBook ? '更新成功！' : '新增成功！' });
         resetForm();
         fetchBooks();
       } else {
         console.error('GAS error:', result);
+        setSubmitStatus({ type: 'error', message: `操作失敗：${result.message || JSON.stringify(result)}` });
       }
     } catch (error) {
       console.error('Error saving book:', error);
+      setSubmitStatus({ type: 'error', message: `連線錯誤：${error.message}` });
     }
   };
 
@@ -297,7 +302,7 @@ function App() {
     try {
       const res = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' }, // text/plain avoids CORS preflight (OPTIONS) which GAS doesn't handle
         body: JSON.stringify({
           action: 'delete',
           bookId,
@@ -549,6 +554,11 @@ function App() {
             >
               <span>{selectedBook ? '確認修改' : '加入書本庫'}</span>
             </button>
+            {submitStatus && (
+              <p className={`text-xs text-center mt-1 ${submitStatus.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                {submitStatus.message}
+              </p>
+            )}
           </form>
         </section>
 
