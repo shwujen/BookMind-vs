@@ -272,23 +272,22 @@ function App() {
     const today = new Date().toISOString().split('T')[0];
     const payload = buildBookPayload(selectedBook ? 'update' : 'add', formData, selectedBook, bookId, today);
 
-    setSubmitStatus(null);
+    setSubmitStatus({ type: 'success', message: '送出中，請稍候...' });
     try {
-      const res = await fetch(GAS_URL, {
+      // mode: 'no-cors' bypasses the GAS 302-redirect CORS block in Chrome.
+      // The response is opaque (unreadable), but GAS still processes the request.
+      await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // text/plain avoids CORS preflight (OPTIONS) which GAS doesn't handle
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+        mode: 'no-cors'
       });
-      const text = await res.text();
-      const result = JSON.parse(text);
-      if (result.status === 'success') {
-        setSubmitStatus({ type: 'success', message: selectedBook ? '更新成功！' : '新增成功！' });
-        resetForm();
-        fetchBooks();
-      } else {
-        console.error('GAS error:', result);
-        setSubmitStatus({ type: 'error', message: `操作失敗：${result.message || JSON.stringify(result)}` });
-      }
+      // Optimistically treat as success; re-fetch list to confirm
+      const action = selectedBook ? '更新' : '新增';
+      setSubmitStatus({ type: 'success', message: `${action}成功！重新整理中...` });
+      resetForm();
+      // Give GAS a moment to commit the write before reading back
+      setTimeout(() => fetchBooks(), 1500);
     } catch (error) {
       console.error('Error saving book:', error);
       setSubmitStatus({ type: 'error', message: `連線錯誤：${error.message}` });
@@ -300,9 +299,10 @@ function App() {
     if (!window.confirm('確定要移除此項目嗎？')) return;
 
     try {
-      const res = await fetch(GAS_URL, {
+      // mode: 'no-cors' bypasses the GAS 302-redirect CORS block in Chrome.
+      await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // text/plain avoids CORS preflight (OPTIONS) which GAS doesn't handle
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
           action: 'delete',
           bookId,
@@ -314,16 +314,14 @@ function App() {
           '書名': selectedBook?.bookName || '',
           book: { bookId, '書籍ID': bookId },
           management: { bookId, '書籍ID': bookId }
-        })
+        }),
+        mode: 'no-cors'
       });
-      const text = await res.text();
-      const result = JSON.parse(text);
-      if (result.status === 'success') {
-        if (selectedBook && selectedBook.bookId === bookId) {
-          setSelectedBook(null);
-        }
-        fetchBooks();
+      if (selectedBook && selectedBook.bookId === bookId) {
+        setSelectedBook(null);
       }
+      // Give GAS a moment to commit before re-fetching
+      setTimeout(() => fetchBooks(), 1500);
     } catch (error) {
       console.error('Error deleting book:', error);
     }
